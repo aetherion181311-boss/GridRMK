@@ -1,0 +1,43 @@
+{
+  "rules": {
+
+    "sensors": {
+      // Anyone authenticated can READ live sensor data
+      ".read": "auth != null",
+      "$roomId": {
+        // Only admins OR server-side writes (no uid = service account) can write
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin')"
+      }
+    },
+
+    "alerts": {
+      // Any authenticated user can read alerts
+      ".read": "auth != null",
+      // Only admins can create/delete alerts
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "history": {
+      // Read: any authenticated user
+      ".read": "auth != null",
+      // Write: admins only (or your server-side aggregation script)
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "users": {
+      // Admins can read all users; each user can read their own profile
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        // Users can only write their own profile on signup; admins can write any
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+
+        // Role field can ONLY be changed by admins — not by the user themselves
+        "role": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+        }
+      }
+    }
+
+  }
+}

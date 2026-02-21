@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Campus Energy Monitor</title>
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+<div class="auth-card">
+  <div class="auth-logo"><p style="color: rgb(15, 181, 159);">RMK</p> CAMPUS<span>ENERGY</span></div>
+  <div class="auth-logo-sub">SMART MONITOR · IoT + GAMIFICATION</div>
+
+  <div class="auth-heading">Create <em>Account</em></div>
+  <div class="auth-sub">New accounts are created as Students. Contact an Admin to be promoted.</div>
+
+  <div class="msg-error"   id="msg-error"></div>
+  <div class="msg-success" id="msg-success"></div>
+
+  <div class="form-group">
+    <label class="form-label" for="name">Full Name</label>
+    <input class="form-input" type="text" id="name"
+           placeholder="e.g. Ruthranath" autocomplete="name" required>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label" for="dept">Department</label>
+      <select class="form-select" id="dept">
+        <option value="">Select…</option>
+        <option>CSE</option>
+        <option>ECE</option>
+        <option>MECH</option>
+        <option>CIVIL</option>
+        <option>IT</option>
+        <option>EEE</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="year">Year</label>
+      <select class="form-select" id="year">
+        <option value="">Select…</option>
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
+        <option>4</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="email">College Email</label>
+    <input class="form-input" type="email" id="email"
+           placeholder="you@rmkec.ac.in" autocomplete="email" required>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="password">Password</label>
+    <div class="input-wrap">
+      <input class="form-input" type="password" id="password"
+             placeholder="Min. 8 characters" autocomplete="new-password" required>
+      <span class="toggle-pw" onclick="togglePw('password', this)">👁</span>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="confirm">Confirm Password</label>
+    <div class="input-wrap">
+      <input class="form-input" type="password" id="confirm"
+             placeholder="Repeat password" autocomplete="new-password" required>
+      <span class="toggle-pw" onclick="togglePw('confirm', this)">👁</span>
+    </div>
+  </div>
+
+  <button class="btn-submit" id="btn-signup" onclick="handleSignup()">Create Account</button>
+
+  <div class="auth-footer">
+    Already have an account? <a href="index.html">Sign in</a>
+  </div>
+</div>
+
+<script type="module">
+  import { signUpUser, showError, showSuccess } from "./js/auth.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { auth } from "./js/firebase-config.js";
+
+  onAuthStateChanged(auth, user => {
+    if (user) window.location.href = "dashboard.html";
+  });
+
+  window.handleSignup = async function () {
+    const name     = document.getElementById("name").value.trim();
+    const dept     = document.getElementById("dept").value;
+    const year     = document.getElementById("year").value;
+    const email    = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const confirm  = document.getElementById("confirm").value;
+    const btn      = document.getElementById("btn-signup");
+
+    if (!name)     return showError("msg-error", "Please enter your full name.");
+    if (!email)    return showError("msg-error", "Please enter your email.");
+    if (password.length < 8) return showError("msg-error", "Password must be at least 8 characters.");
+    if (password !== confirm) return showError("msg-error", "Passwords do not match.");
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Creating account…';
+
+    try {
+      await signUpUser({ name, email, password, dept, year });
+      showSuccess("msg-success", "✓ Account created! Redirecting to dashboard…");
+      setTimeout(() => window.location.href = "dashboard.html", 1500);
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = "Create Account";
+      const messages = {
+        "auth/email-already-in-use": "An account with this email already exists.",
+        "auth/invalid-email":        "Please enter a valid email address.",
+        "auth/weak-password":        "Password is too weak. Use at least 8 characters.",
+      };
+      showError("msg-error", messages[err.code] || "Sign up failed. Please try again.");
+    }
+  };
+
+  window.togglePw = function(id, icon) {
+    const input = document.getElementById(id);
+    if (input.type === "password") { input.type = "text";     icon.textContent = "🙈"; }
+    else                           { input.type = "password"; icon.textContent = "👁"; }
+  };
+</script>
+</body>
+</html>

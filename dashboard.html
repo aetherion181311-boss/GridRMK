@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Campus Energy Monitor</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark"><p style="color: rgb(15, 180, 180);">RMK</p>CAMPUS<span>ENERGY</span></div>
+      <div class="logo-sub">SMART MONITOR v1.0</div>
+    </div>
+
+    <div class="nav-section">MAIN</div>
+    <div class="nav-item active" onclick="showView('dashboard',this)">
+      <span class="nav-icon">⚡</span>Dashboard
+    </div>
+    <div class="nav-item" onclick="showView('analytics',this)">
+      <span class="nav-icon">📊</span>Analytics
+    </div>
+    <div class="nav-item" onclick="showView('classrooms',this)">
+      <span class="nav-icon">🏫</span>Classrooms
+    </div>
+
+    <div class="nav-section">GAMIFICATION</div>
+    <div class="nav-item" onclick="showView('leaderboard',this)">
+      <span class="nav-icon">🏆</span>Leaderboard
+    </div>
+
+    <div class="nav-section">SYSTEM</div>
+    <div class="nav-item" onclick="showView('alerts',this)">
+      <span class="nav-icon">🔔</span>Alerts
+      <span class="badge-count" id="alert-badge">0</span>
+    </div>
+
+    <!-- Admin-only items (hidden for students) -->
+    <div class="nav-section admin-only" style="display:none">ADMIN</div>
+    <div class="nav-item  admin-only" style="display:none"
+         onclick="showView('admin',this)">
+      <span class="nav-icon">⚙️</span>Admin Panel
+    </div>
+
+    <div class="sidebar-footer">
+      <div><span class="live-dot"></span><span class="live-text">LIVE FEED</span></div>
+      <div class="user-info" style="margin-top:8px">
+        <div class="user-name" id="user-name">Loading…</div>
+        <div><span id="role-badge" style="font-size:.58rem">STUDENT</span></div>
+      </div>
+      <button class="btn-signout" id="btn-signout">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- ── Main content ────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Page header -->
+    <div class="page-header fade-in">
+      <div>
+        <div class="page-title">Smart <em>Energy</em> Monitor for <em>RMK</em></div>
+        <div class="page-sub">IoT · REAL-TIME · GAMIFIED CONSERVATION</div>
+      </div>
+      <div>
+        <div class="time-big" id="clock">--:--:--</div>
+        <div class="time-date">THU, 19 FEB 2026</div>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD VIEW ===== -->
+    <div id="view-dashboard" class="view active">
+      <div class="kpi-strip fade-in">
+        <div class="kpi" style="--k-color:var(--accent)">
+          <div class="kpi-label">Live Power Draw</div>
+          <div class="kpi-value" id="kpi-live">—</div>
+          <div class="kpi-unit">kW across campus</div>
+          <div class="kpi-delta delta-dn">Live from sensors</div>
+        </div>
+        <div class="kpi" style="--k-color:var(--accent3)">
+          <div class="kpi-label">Today's Usage</div>
+          <div class="kpi-value" id="kpi-kwh">—</div>
+          <div class="kpi-unit">kWh consumed</div>
+          <div class="kpi-delta delta-dn">Cumulative today</div>
+        </div>
+        <div class="kpi" style="--k-color:var(--warn)">
+          <div class="kpi-label">Monthly Budget</div>
+          <div class="kpi-value" id="kpi-budget-pct">—</div>
+          <div class="kpi-unit"><span id="stat-budget-pct">—</span> · <span id="stat-kwh-left">—</span> left</div>
+          <div class="kpi-delta delta-dn">of 49,334 kWh</div>
+        </div>
+        <div class="kpi" style="--k-color:var(--accent2)">
+          <div class="kpi-label">Idle Rooms</div>
+          <div class="kpi-value" id="kpi-idle">—</div>
+          <div class="kpi-unit">devices on, no occupancy</div>
+          <div class="kpi-delta delta-up">Check alerts</div>
+        </div>
+      </div>
+
+      <div class="g21">
+        <div class="card fade-in">
+          <div class="card-title">
+            Hourly Consumption — Today
+            <span class="hint">kWh / hour · pulled from Firebase</span>
+          </div>
+          <div class="chart-area" id="hourly-chart">
+            <div style="color:var(--muted);font-size:.7rem;margin:auto">
+              Waiting for sensor data…
+            </div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Today</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--muted2)"></div>Yesterday</div>
+          </div>
+        </div>
+
+        <div class="card fade-in">
+          <div class="card-title">Monthly Target</div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0 10px">
+            <div class="ring-outer" id="ring-target">
+              <!-- Rendered by dashboard.js → renderRing() -->
+              <svg width="130" height="130" viewBox="0 0 130 130"
+                   style="transform:rotate(-90deg)">
+                <circle cx="65" cy="65" r="54" fill="none" stroke="var(--border)" stroke-width="10"/>
+              </svg>
+              <div class="ring-label">
+                <div class="ring-pct" style="color:var(--muted)">—</div>
+                <div class="ring-sub">loading</div>
+              </div>
+            </div>
+            <div style="font-size:.62rem;color:var(--muted);margin-top:8px">
+              Based on live kWh from sensors
+            </div>
+          </div>
+          <div class="stat-row"><span class="stat-key">Budget</span><span class="stat-val">₹2,96,000</span></div>
+          <div class="stat-row"><span class="stat-key">Used</span><span class="stat-val" style="color:var(--warn)" id="stat-budget-pct">—</span></div>
+          <div class="stat-row"><span class="stat-key">Remaining</span><span class="stat-val" style="color:var(--accent)" id="stat-kwh-left">—</span></div>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card fade-in">
+          <div class="card-title">Department Breakdown <span class="hint">Today's kWh</span></div>
+          <div id="dept-list">
+            <div style="color:var(--muted);font-size:.7rem;padding:12px">
+              Connecting to Firebase…
+            </div>
+          </div>
+        </div>
+        <div class="card fade-in">
+          <div class="card-title">
+            Live Alerts
+            <span class="hint">
+              <span style="cursor:pointer;color:var(--accent)"
+                onclick="showView('alerts',document.querySelectorAll('.nav-item')[4])">
+                View all →
+              </span>
+            </span>
+          </div>
+          <div id="alerts-mini">
+            <div style="color:var(--muted);font-size:.7rem">No alerts.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ANALYTICS VIEW ===== -->
+    <div id="view-analytics" class="view">
+      <div class="year-pills">
+        <div class="year-pill active" onclick="setYear(this)">All Years</div>
+        <div class="year-pill" onclick="setYear(this)">1st Year</div>
+        <div class="year-pill" onclick="setYear(this)">2nd Year</div>
+        <div class="year-pill" onclick="setYear(this)">3rd Year</div>
+        <div class="year-pill" onclick="setYear(this)">4th Year</div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">DEPT:</span>
+        <select class="filter-select">
+          <option>All Departments</option>
+          <option>CSE</option><option>ECE</option><option>MECH</option>
+          <option>CIVIL</option><option>IT</option><option>EEE</option>
+        </select>
+        <select class="filter-select">
+          <option>Daily</option><option>Weekly</option><option>Monthly</option>
+        </select>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">Department Comparison <span class="hint">kWh</span></div>
+          <div class="chart-area" id="dept-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Year-wise Usage <span class="hint">kWh</span></div>
+          <div class="chart-area" id="year-chart"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Monthly Trend <span class="hint">from /history/monthly in Firebase</span></div>
+        <div id="monthly-svg" style="padding:8px 0"></div>
+      </div>
+    </div>
+
+    <!-- ===== CLASSROOMS VIEW ===== -->
+    <div id="view-classrooms" class="view">
+      <div class="filter-row">
+        <span class="filter-label">FILTER:</span>
+        <select class="filter-select" id="rm-dept" onchange="onRoomFilterChange()">
+          <option value="">All Depts</option>
+          <option>CSE</option><option>ECE</option><option>MECH</option>
+          <option>CIVIL</option><option>IT</option><option>EEE</option>
+        </select>
+        <select class="filter-select" id="rm-year" onchange="onRoomFilterChange()">
+          <option value="">All Years</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+        </select>
+        <select class="filter-select" id="rm-sort" onchange="onRoomFilterChange()">
+          <option value="high">Highest Usage</option>
+          <option value="low">Lowest Usage</option>
+          <option value="id">Room ID</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          All Classrooms — Live
+          <span class="hint" id="room-count">—</span>
+        </div>
+        <div class="room-grid" id="room-grid">
+          <div style="color:var(--muted);font-size:.7rem;grid-column:1/-1;padding:16px">
+            Waiting for sensor data…
+          </div>
+        </div>
+      </div>
+      <div id="room-detail"></div>
+    </div>
+
+    <!-- ===== LEADERBOARD VIEW ===== -->
+    <div id="view-leaderboard" class="view">
+      <div class="tabs">
+        <div class="tab active" onclick="setLbTab(this,'dept')">By Department</div>
+        <div class="tab" onclick="setLbTab(this,'room')">By Classroom</div>
+        <div class="tab" onclick="setLbTab(this,'year')">By Year</div>
+      </div>
+      <div class="medal-row" id="medal-row"></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">🏆 Efficiency Rankings <span class="hint">Lower usage = Higher rank</span></div>
+          <div id="lb-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Score Chart</div>
+          <div class="chart-area" id="lb-chart"></div>
+          <div style="margin-top:12px">
+            <div class="alert a-ok">
+              <div class="alert-icon">🌿</div>
+              <div>
+                <div class="alert-title">How Eco Score Works</div>
+                <div class="alert-body">Lower average kWh relative to others = higher score. Idle penalties apply when sensors detect power with no occupancy.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ALERTS VIEW ===== -->
+    <div id="view-alerts" class="view">
+      <div class="kpi-strip" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi" style="--k-color:var(--accent2)">
+          <div class="kpi-label">Critical</div>
+          <div class="kpi-value" id="kpi-crit">0</div>
+          <div class="kpi-unit">immediate action</div>
+        </div>
+        <div class="kpi" style="--k-color:var(--warn)">
+          <div class="kpi-label">Warnings</div>
+          <div class="kpi-value" id="kpi-warns">0</div>
+          <div class="kpi-unit">monitor closely</div>
+        </div>
+        <div class="kpi" style="--k-color:var(--accent)">
+          <div class="kpi-label">Data Source</div>
+          <div class="kpi-value" style="font-size:1rem">Firebase</div>
+          <div class="kpi-unit">/alerts path · real-time</div>
+        </div>
+      </div>
+
+      <!-- Admin-only: add alert -->
+      <div class="admin-panel admin-only" style="display:none;margin-bottom:16px">
+        <div class="card-title" style="font-size:.82rem;font-weight:700;margin-bottom:12px">
+          ⚙️ Broadcast Alert <span style="font-size:.6rem;color:var(--muted);font-weight:400">Admin only</span>
+        </div>
+        <input class="admin-input" id="alert-title-input" placeholder="Alert title…">
+        <input class="admin-input" id="alert-body-input"  placeholder="Alert body / details…">
+        <select class="filter-select" id="alert-type-select" style="margin-bottom:10px">
+          <option value="warning">Warning</option>
+          <option value="critical">Critical</option>
+          <option value="ok">Info / OK</option>
+        </select>
+        <br>
+        <button class="btn-admin" onclick="addManualAlert()">📢 Broadcast Alert</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Active Alerts <span class="hint">from /alerts in Firebase</span></div>
+        <div id="all-alerts">
+          <div style="color:var(--muted);font-size:.7rem;padding:12px">No alerts.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN VIEW ===== -->
+    <div id="view-admin" class="view">
+      <div class="admin-panel">
+        <div class="card-title" style="font-size:.9rem;font-weight:700;color:var(--accent2);margin-bottom:16px">
+          ⚙️ User Management
+        </div>
+        <div style="overflow-x:auto">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Dept</th><th>Role</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="user-table-body">
+              <tr><td colspan="5" style="color:var(--muted)">Loading users…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="admin-panel">
+        <div class="card-title" style="font-size:.9rem;font-weight:700;color:var(--accent2);margin-bottom:4px">
+          📡 Firebase Data Structure
+        </div>
+        <div style="font-size:.65rem;color:var(--muted);margin-bottom:12px">
+          Reference — this is how your clamp sensors should push data to Firebase
+        </div>
+        <pre style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:.65rem;color:var(--accent);overflow-x:auto;line-height:1.7">{
+  "sensors": {
+    "CSE-Y1R1": {
+      "room_id":        "CSE-Y1R1",
+      "dept":           "CSE",
+      "year":           1,
+      "sensor_id":      "SENSOR_001",
+      "current_kw":     3.24,        ← live reading (kW)
+      "current_a":      14.7,        ← amperes from clamp
+      "voltage":        220,         ← volts
+      "cumulative_kwh": 18.5,        ← total today (kWh)
+      "status":         "active",    ← "active" | "idle" | "off"
+      "last_updated":   1708345200000
+    }
+  },
+  "alerts": {
+    "-NxAbc123": {
+      "title":     "CSE Lab 3 — Idle Wastage",
+      "body":      "AC on, no students detected.",
+      "type":      "warning",        ← "warning" | "critical" | "ok"
+      "timestamp": 1708345200000
+    }
+  },
+  "history": {
+    "monthly": {
+      "2025-08": 48200,
+      "2025-09": 51000,
+      "2026-02": 35000
+    }
+  },
+  "users": {
+    "uid_abc": {
+      "name":  "Arjun K",
+      "email": "arjun@college.edu",
+      "dept":  "CSE",
+      "year":  "3",
+      "role":  "student"
+    }
+  }
+}</pre>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
